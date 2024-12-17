@@ -20,4 +20,5 @@ COPY --from=build /app .
 # Expose the port and set the entry point
 EXPOSE 8080
 
+
 ENTRYPOINT ["dotnet", "MyMvcApp.dll"]
