@@ -1,0 +1,7 @@
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\MyMvcApp.exe
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\appsettings.Development.json
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\appsettings.json
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\MyMvcApp.dll
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\MyMvcApp.deps.json
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\MyMvcApp.runtimeconfig.json
+C:\Users\v-agenetu\Documents\oss\.net\MyMvcApp\publish\MyMvcApp.pdb
