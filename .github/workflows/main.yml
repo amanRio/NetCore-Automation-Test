@@ -14,36 +14,43 @@ on:
           - dev4
           - qa1
           - prod
-      run_id:
-        description: 'Select the Workflow Run ID'
-        required: true
-        type: choice
-        default: 'latest'  # This will be populated dynamically in the next steps
+      # run_id:
+      #   description: 'Enter the Workflow Run ID (leave empty for latest)'
+      #   required: true
+      #   type: string
+      #   default: 'latest'  # Default value
 
 jobs:
-  get_run_ids:
+  get_run_id:
     runs-on: ubuntu-latest
     outputs:
-      run_ids: ${{ steps.set_run_ids.outputs.run_ids }}
+      run_id: ${{ steps.get_run_id_output.outputs.run_id }}
 
     steps:
-    - name: Set Run IDs
-      id: set_run_ids
-      run: |
-        # Fetch the list of previous workflow runs using GitHub API
-        curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/actions/runs" \
-          | jq '.workflow_runs | map(select(.status == "success")) | .[:5] | map(.id)' > run_ids.json
-        
-        # Read the run IDs and print them
-        echo "Run IDs: $(cat run_ids.json)"
-        
-        # Set the output for GitHub Actions to use later
-        echo "::set-output name=run_ids::$(cat run_ids.json)"
-    
+      - name: Get Latest Successful Run ID for Build Workflow (If "latest" is selected)
+        id: get_run_id_output
+        run: |
+          if [ "${{ github.event.inputs.run_id }}" == "latest" ]; then
+            echo "Fetching the latest successful workflow run ID for the build workflow..."
+            run_id=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/buildpublish.yml/runs?status=success&per_page=1" \
+              | jq -r '.workflow_runs[0].id')
+            
+            # Check if run_id is valid
+            if [ "$run_id" != "null" ]; then
+              echo "Latest Run ID: $run_id"
+              echo "::set-output name=run_id::$run_id"
+            else
+              echo "No successful workflow runs found."
+              exit 1
+            fi
+          else
+            echo "Using provided run_id: ${{ github.event.inputs.run_id }}"
+            echo "::set-output name=run_id::${{ github.event.inputs.run_id }}"
+          fi
+
   deploy:
-    needs: get_run_ids
+    needs: get_run_id
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,14 +67,14 @@ jobs:
             artifact_name: keystone.web.scheduler
 
     steps:
-      - name: Checkout Repository (if needed)
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Download Build Artifacts from Previous Workflow
         uses: actions/download-artifact@v2
         with:
-          run-id: ${{ github.event.inputs.run_id }}  # Dynamic run ID input
-          artifact-name: drop  # The artifact name per matrix
+          run-id: ${{ needs.get_run_id.outputs.run_id }}  # Using dynamically fetched run ID
+          artifact-name: ${{ matrix.artifact_name }}
           path: ./artifact/drop
 
       - name: Login to Azure
@@ -77,7 +84,7 @@ jobs:
 
       - name: Deploy Web App
         run: |
-          zip_file="./artifact/drop/drop.zip"
+          zip_file="./artifact/drop/${{ matrix.artifact_name }}.zip"
           az webapp deployment source config-zip --resource-group myResourceGroup --name "${{ matrix.app_name }}" --src "$zip_file"
 
       - name: Logout of Azure
