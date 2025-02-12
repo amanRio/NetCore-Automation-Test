@@ -1,54 +1,58 @@
-name: Deploy to Azure App Service
+name: Deploy Web Apps (Matrix Deployment)
 
 on:
   workflow_dispatch:
     inputs:
-      application:
-        description: 'Select the application to deploy'
-        required: true
-        type: choice
-        options:
-          - mainapp
-          - supportapp
-          - functionapp
       environment:
-        description: 'Select the environment to deploy (dev, qa, prod)'
+        description: 'Select the environment to deploy (dev1, dev2, prod)'
         required: true
         type: choice
         options:
-          - dev
-          - qa
+          - dev1
+          - dev2
+          - dev3
+          - dev4
+          - qa1
           - prod
+      # release_version:
+      #   description: 'Enter the release version (e.g., latest or specific build number)'
+      #   required: true
+      #   default: 'latest'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}  # Dynamic environment selection
-
+    strategy:
+      matrix:
+        include:
+          - app_name: keystone-api-01
+            artifact_name: keystone.web.api
+          - app_name: keystone-api-autotask-01
+            artifact_name: keystone.web.api-autotask
+          - app_name: keystone-api-dattopsa-01
+            artifact_name: keystone.web.api-dattopsa
+          - app_name: keystone-auth-01
+            artifact_name: keystone.web.auth
+          - app_name: keystone-scheduler-01
+            artifact_name: keystone.web.scheduler
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository (if needed)
+        uses: actions/checkout@v3
 
-    - name: Download the selected artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: ${{ github.event.inputs.application }}  # Dynamically select the artifact based on input
-        path: $(System.DefaultWorkingDirectory)/artifact
+      - name: Download Build Artifacts
+        run: |
+          mkdir -p artifact/drop
+          cp $(System.DefaultWorkingDirectory)/artifact/drop/${{ matrix.artifact_name }}.zip artifact/drop/
 
-    - name: Set up Azure CLI
-      uses: azure/setup-azurecli@v1
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy Web App
+        run: |
+          zip_file="artifact/drop/${{ matrix.artifact_name }}.zip"
+          az webapp deployment source config-zip --resource-group myResourceGroup --name "${{ matrix.app_name }}" --src "$zip_file"
 
-    - name: Deploy to Azure App Service
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ secrets.AZURE_APP_NAME }}
-        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-        package: '$(System.DefaultWorkingDirectory)/artifact/${{ github.event.inputs.application }}.zip'  # Dynamic path for selected app
-
-    - name: Deployment Completed
-      run: echo "Deployment to Azure App Service completed successfully!"
+      - name: Logout of Azure
+        run: az logout
