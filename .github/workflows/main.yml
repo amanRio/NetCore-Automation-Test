@@ -29,10 +29,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Download Artifact
+    - name: Download the selected artifact
       uses: actions/download-artifact@v3
       with:
-        name: ${{ github.event.inputs.application }}  # Dynamically select artifact based on input
+        name: ${{ github.event.inputs.application }}  # Dynamically select the artifact based on input
         path: $(System.DefaultWorkingDirectory)/artifact
 
     - name: Set up Azure CLI
@@ -48,7 +48,7 @@ jobs:
       with:
         app-name: ${{ secrets.AZURE_APP_NAME }}
         publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-        package: '$(System.DefaultWorkingDirectory)/artifact/drop/${{ github.event.inputs.application }}.zip'
+        package: '$(System.DefaultWorkingDirectory)/artifact/${{ github.event.inputs.application }}.zip'  # Dynamic path for selected app
 
     - name: Deployment Completed
       run: echo "Deployment to Azure App Service completed successfully!"
