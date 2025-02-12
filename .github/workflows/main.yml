@@ -14,13 +14,36 @@ on:
           - dev4
           - qa1
           - prod
-      # release_version:
-      #   description: 'Enter the release version (e.g., latest or specific build number)'
-      #   required: true
-      #   default: 'latest'
+      run_id:
+        description: 'Select the Workflow Run ID'
+        required: true
+        type: choice
+        options: []  # This will be populated dynamically in the next steps
 
 jobs:
+  get_run_ids:
+    runs-on: ubuntu-latest
+    outputs:
+      run_ids: ${{ steps.set_run_ids.outputs.run_ids }}
+
+    steps:
+    - name: Set Run IDs
+      id: set_run_ids
+      run: |
+        # Fetch the list of previous workflow runs using GitHub API
+        curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs" \
+          | jq '.workflow_runs | map(select(.status == "success")) | .[:5] | map(.id)' > run_ids.json
+        
+        # Read the run IDs and print them
+        echo "Run IDs: $(cat run_ids.json)"
+        
+        # Set the output for GitHub Actions to use later
+        echo "::set-output name=run_ids::$(cat run_ids.json)"
+    
   deploy:
+    needs: get_run_ids
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,14 +58,17 @@ jobs:
             artifact_name: keystone.web.auth
           - app_name: keystone-scheduler-01
             artifact_name: keystone.web.scheduler
+
     steps:
       - name: Checkout Repository (if needed)
         uses: actions/checkout@v3
 
-      - name: Download Build Artifacts
-        run: |
-          mkdir -p artifact/drop
-          cp $(System.DefaultWorkingDirectory)/artifact/drop/${{ matrix.artifact_name }}.zip artifact/drop/
+      - name: Download Build Artifacts from Previous Workflow
+        uses: actions/download-artifact@v2
+        with:
+          run-id: ${{ github.event.inputs.run_id }}  # Dynamic run ID input
+          artifact-name: drop  # The artifact name per matrix
+          path: ./artifact/drop
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -51,7 +77,7 @@ jobs:
 
       - name: Deploy Web App
         run: |
-          zip_file="artifact/drop/${{ matrix.artifact_name }}.zip"
+          zip_file="./artifact/drop/drop.zip"
           az webapp deployment source config-zip --resource-group myResourceGroup --name "${{ matrix.app_name }}" --src "$zip_file"
 
       - name: Logout of Azure
