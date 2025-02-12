@@ -1,0 +1,54 @@
+name: Deploy to Azure App Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      application:
+        description: 'Select the application to deploy'
+        required: true
+        type: choice
+        options:
+          - mainapp
+          - supportapp
+          - functionapp
+      environment:
+        description: 'Select the environment to deploy (dev, qa, prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}  # Dynamic environment selection
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ github.event.inputs.application }}  # Dynamically select artifact based on input
+        path: $(System.DefaultWorkingDirectory)/artifact
+
+    - name: Set up Azure CLI
+      uses: azure/setup-azurecli@v1
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ secrets.AZURE_APP_NAME }}
+        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+        package: '$(System.DefaultWorkingDirectory)/artifact/drop/${{ github.event.inputs.application }}.zip'
+
+    - name: Deployment Completed
+      run: echo "Deployment to Azure App Service completed successfully!"
