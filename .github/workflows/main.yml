@@ -14,11 +14,11 @@ on:
           - dev4
           - qa1
           - prod
-      # run_id:
-      #   description: 'Enter the Workflow Run ID (leave empty for latest)'
-      #   required: true
-      #   type: string
-      #   default: 'latest'  # Default value
+      run_id:
+        description: 'Enter the Workflow Run ID (leave empty for latest)'
+        required: true
+        type: string
+        default: 'latest'  # Default value
 
 jobs:
   get_run_id:
