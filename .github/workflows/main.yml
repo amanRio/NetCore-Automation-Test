@@ -52,6 +52,7 @@ jobs:
   deploy:
     needs: get_run_id
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }} 
     strategy:
       matrix:
         include:
