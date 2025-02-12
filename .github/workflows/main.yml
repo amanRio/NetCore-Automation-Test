@@ -18,7 +18,7 @@ on:
         description: 'Select the Workflow Run ID'
         required: true
         type: choice
-        options: []  # This will be populated dynamically in the next steps
+        default: 'latest'  # This will be populated dynamically in the next steps
 
 jobs:
   get_run_ids:
