@@ -1,0 +1,37 @@
+name: .NET Core MVC Build and Publish
+
+on:
+  push:
+    branches:
+      - main # Or any branch you want to trigger this action
+  pull_request:
+    branches:
+      - main # Optional: For pull requests to the main branch
+
+jobs:
+  build:
+    runs-on: windows-latest # Or 'windows-latest' if you prefer running on Windows
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.0' # Specify the version of .NET Core (adjust as needed)
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release
+
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: drop
+        path: ./publish # Path to the build output
