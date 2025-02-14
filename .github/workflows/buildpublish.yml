@@ -1,4 +1,4 @@
-name: .NET Core MVC Build and Publish
+name: Keystone-Build-pipline
 
 on:
   push:
