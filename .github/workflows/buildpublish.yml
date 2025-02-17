@@ -1,5 +1,4 @@
-name: Keystone-Build-pipline
-
+name: CI-Build-Pipeline
 on:
   push:
     branches:

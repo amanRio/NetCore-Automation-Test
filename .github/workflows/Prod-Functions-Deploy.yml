@@ -1,0 +1,54 @@
+name: Prod-Functions-Deploy
+
+on:
+  workflow_dispatch:
+      # run_id:
+      #   description: 'Enter the Workflow Run ID (leave empty for latest)'
+      #   required: true
+      #   type: string
+      #   default: 'latest'  # Default value
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }} 
+    strategy:
+      matrix:
+        include:
+          - app_name: keystone-api-01
+            artifact_name: keystone.web.api
+          - app_name: keystone-api-autotask-01
+            artifact_name: keystone.web.api-autotask
+          - app_name: keystone-api-dattopsa-01
+            artifact_name: keystone.web.api-dattopsa
+          - app_name: keystone-auth-01
+            artifact_name: keystone.web.auth
+          - app_name: keystone-scheduler-01
+            artifact_name: keystone.web.scheduler
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Download Build Artifacts from Previous Workflow
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ needs.get_run_id.outputs.run_id }}  # Using dynamically fetched run ID
+          artifact-name: ${{ matrix.artifact_name }}
+          path: ./artifact/drop
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to ${{ github.event.inputs.environment }}  Environment
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ matrix.app_name }}
+          resource-group: myResourceGroup
+          slot-name: 'production'
+          environment: ${{ github.event.inputs.environment }} 
+
+      - name: Logout of Azure
+        run: az logout
