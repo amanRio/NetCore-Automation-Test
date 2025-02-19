@@ -16,12 +16,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up NuGet
-      uses: NuGet/NuGetAction@v2
+      uses: nuget/setup-nuget@v2
       with:
+        nuget-api-key: ${{ secrets.NuGetAPIKey }}
         nuget-version: '6.5.0'
+    - run: nuget restore MyProject.sln
 
-    - name: Restore NuGet packages
-      run: nuget restore '*.sln;Build.proj' -Source 'https://nuget.org/api/v2'
+    # - name: Restore NuGet packages
+    #   run: nuget restore '*.sln;Build.proj' -Source 'https://nuget.org/api/v2'
 
     - name: Install Visual Studio Build Tools
       uses: microsoft/setup-msbuild@v2
@@ -32,12 +34,14 @@ jobs:
       env:
         BuildConfiguration: 'Release'  # Set as per your requirement
         BuildPlatform: 'x64'  # Set as per your requirement
+        
     - name: Publish Artifacts
       if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: drop
         path: $(System.DefaultWorkingDirectory)
+        
     - name: Publish Symbols for Main Branch
       uses: actions/upload-artifact@v4
       with:
