@@ -31,13 +31,16 @@ jobs:
       run: echo "ARTIFACT_STAGING_DIR=${{ github.workspace }}\artifacts" >> $GITHUB_ENV
 
     - name: Build with MSBuild
+      shell: pwsh
       run: |
-        msbuild MyMvcApp.sln ^
-          /p:PackageLocation="${{ env.ARTIFACT_STAGING_DIR }}" ^
-          /p:DeployOnBuild=True ^
-          /p:CleanIntermediateFilesAfterBuild=true ^
-          /v:q /maxcpucount ^
-          /p:Configuration=Release ^
+        $solution = "MyMvcApp.sln"
+        $packageLocation = "${{ env.ARTIFACT_STAGING_DIR }}"
+        & msbuild $solution `
+          /p:PackageLocation="$packageLocation" `
+          /p:DeployOnBuild=True `
+          /p:CleanIntermediateFilesAfterBuild=true `
+          /v:q /maxcpucount `
+          /p:Configuration=Release `
           /p:Platform="Any CPU"
         
     - name: Publish Artifacts
