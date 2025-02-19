@@ -22,7 +22,7 @@ jobs:
     
 
     - name: Restore NuGet packages
-      run: nuget restore '*.sln;Build.proj' -Source 'https://nuget.org/api/v2'
+      run: nuget restore '*.sln'
 
     - name: Install Visual Studio Build Tools
       uses: microsoft/setup-msbuild@v2
