@@ -22,14 +22,14 @@ jobs:
     
 
     - name: Restore NuGet packages
-      run: nuget restore '*.sln'
+      run:  nuget restore $(find . -name "*.sln")
 
     - name: Install Visual Studio Build Tools
       uses: microsoft/setup-msbuild@v2
 
     - name: Execute Build
       run: |
-        msbuild Build.proj /p:PackageLocation="$(System.ArtifactStagingDirectory)\\" /p:DeployOnBuild=True /p:CleanIntermediateFilesAfterBuild=true /v:q /maxcpucount /p:Configuration=$(BuildConfiguration) /p:Platform=$(BuildPlatform)
+        msbuild MyMvcApp.sln /p:PackageLocation="$(System.ArtifactStagingDirectory)\\" /p:DeployOnBuild=True /p:CleanIntermediateFilesAfterBuild=true /v:q /maxcpucount /p:Configuration=$(BuildConfiguration) /p:Platform=$(BuildPlatform)
       env:
         BuildConfiguration: 'Release'  # Set as per your requirement
         BuildPlatform: 'x64'  # Set as per your requirement
