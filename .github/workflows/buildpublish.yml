@@ -48,12 +48,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: drop
-        path: $(System.DefaultWorkingDirectory)
-        
+        path: ${{ github.workspace }}
+
     - name: Publish Symbols for Main Branch
       uses: actions/upload-artifact@v4
       with:
         name: symbols
         path: '**/bin/**/*.pdb'
+
     
         
