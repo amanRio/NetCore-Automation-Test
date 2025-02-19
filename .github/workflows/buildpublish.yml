@@ -13,24 +13,35 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Set up .NET Core
-      uses: actions/setup-dotnet@v2
+    - name: Set up NuGet
+      uses: NuGet/NuGetAction@v2
       with:
-        dotnet-version: '8.0' # Specify the version of .NET Core (adjust as needed)
+        nuget-version: '6.5.0'
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Restore NuGet packages
+      run: nuget restore '*.sln;Build.proj' -Source 'https://nuget.org/api/v2'
 
-    - name: Build
-      run: dotnet build --configuration Release
+    - name: Install Visual Studio Build Tools
+      uses: microsoft/setup-msbuild@v2
 
-    - name: Publish
-      run: dotnet publish --configuration Release --output ./publish
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4.6.0
+    - name: Execute Build
+      run: |
+        msbuild Build.proj /p:PackageLocation="$(System.ArtifactStagingDirectory)\\" /p:DeployOnBuild=True /p:CleanIntermediateFilesAfterBuild=true /v:q /maxcpucount /p:Configuration=$(BuildConfiguration) /p:Platform=$(BuildPlatform)
+      env:
+        BuildConfiguration: 'Release'  # Set as per your requirement
+        BuildPlatform: 'x64'  # Set as per your requirement
+    - name: Publish Artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v3
       with:
         name: drop
-        path: ./publish # Path to the build output
+        path: $(System.DefaultWorkingDirectory)
+    - name: Publish Symbols for Main Branch
+      uses: actions/upload-artifact@v3
+      with:
+        name: symbols
+        path: '**/bin/**/*.pdb'
+    
+        
