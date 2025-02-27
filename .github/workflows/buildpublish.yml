@@ -22,7 +22,7 @@ jobs:
     
 
     - name: Restore NuGet packages
-      run:  nuget restore $(find . -name "*.sln")
+      run:  nuget restore MyMvcApp.sln
 
     - name: Install Visual Studio Build Tools
       uses: microsoft/setup-msbuild@v2
