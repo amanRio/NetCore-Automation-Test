@@ -26,18 +26,14 @@ jobs:
     runs-on: windows-latest
     steps:
       
-
-
-  
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: drop-${{ github.event.inputs. build-number}}
+          name: drop-${{ github.event.inputs.build-number }}
           path: ./drop
-          run-id: 13564575102
-          
-         
-
+          token: ${{ github.token }}
+          run-id: 13589732906
+                
       - name: Upload artifacts for later use
         uses: actions/upload-artifact@v4
         with:
