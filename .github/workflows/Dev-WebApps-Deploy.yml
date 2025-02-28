@@ -25,7 +25,26 @@ jobs:
   download-artifacts:
     runs-on: windows-latest
     steps:
-          
+      - name: Check if artifact exists by name
+        run: |
+          artifact_name="drop-${{ github.event.inputs.build-number }}"
+          echo "Checking for artifact: $artifact_name"
+      
+          # List all artifacts for the repository and filter by name
+          artifact_id=$(gh api -H "Accept: application/vnd.github.v3+json" \
+            /repos/amanrio/NetCore-Automation-Test/actions/artifacts \
+            | jq -r ".artifacts[] | select(.name == \"$artifact_name\") | .id")
+      
+          if [ -z "$artifact_id" ]; then
+            echo "Artifact $artifact_name not found!"
+            exit 1
+          else
+            echo "Artifact $artifact_name found with ID: $artifact_id"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
