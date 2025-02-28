@@ -28,7 +28,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: drop-27
+          name: drop
           path: drop
 
       - name: Upload artifacts for later use
