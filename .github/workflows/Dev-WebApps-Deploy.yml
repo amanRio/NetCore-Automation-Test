@@ -1,65 +1,72 @@
-name: Dev-WebApps-Deploy
+name: Dev Web Apps Deploy 
 
 on:
+  push:
+    branches:
+      - dev/1971-Set-Up-a-New-GitHub-Actions
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Select the environment to deploy (dev1, dev2, prod)'
+        description: 'Select the environment to deploy to'
         required: true
+        default: 'dev1'
         type: choice
         options:
           - dev1
           - dev2
           - dev3
           - dev4
-          - qa1
-      # run_id:
-      #   description: 'Enter the Workflow Run ID (leave empty for latest)'
-      #   required: true
-      #   type: string
-      #   default: 'latest'  # Default value
+          - qa
+      build-number:
+        description: 'The build number to deploy'
+        required: true
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }} 
-    strategy:
-      matrix:
-        include:
-          - app_name: keystone-api-01
-            artifact_name: keystone.web.api
-          - app_name: keystone-api-autotask-01
-            artifact_name: keystone.web.api-autotask
-          - app_name: keystone-api-dattopsa-01
-            artifact_name: keystone.web.api-dattopsa
-          - app_name: keystone-auth-01
-            artifact_name: keystone.web.auth
-          - app_name: keystone-scheduler-01
-            artifact_name: keystone.web.scheduler
-
+  download-artifacts:
+    runs-on: windows-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Download Build Artifacts from Previous Workflow
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ needs.get_run_id.outputs.run_id }}  # Using dynamically fetched run ID
-          artifact-name: ${{ matrix.artifact_name }}
-          path: ./artifact/drop
+          name: drop-${{ github.event.inputs.build-number }}
+          path: drop
 
-      - name: Login to Azure
-        uses: azure/login@v1
+      - name: Upload artifacts for later use
+        uses: actions/upload-artifact@v4
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          name: deploy-artifacts
+          path: drop/
 
-      - name: Deploy to ${{ github.event.inputs.environment }}  Environment
+  deploy:
+    needs: download-artifacts
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        environment: [ "${{ github.event.inputs.environment || 'dev1' }}" ]
+        app:
+          - { name: "keystone-api", artifact: "keystone.web.api.zip" }
+          - { name: "keystone-auth", artifact: "Keystone.Web.Auth.zip" }
+          - { name: "keystone-callback", artifact: "Keystone.Web.Callback.zip" }
+          - { name: "keystone-api-autotask", artifact: "Keystone.Web.Api.Autotask.zip" }
+          - { name: "keystone-externalredirect", artifact: "Keystone.Web.ExternalRedirect.zip" }
+          - { name: "keystone-emailscheduler", artifact: "Keystone.Web.EmailScheduler.zip" }
+          - { name: "keystone-image", artifact: "Keystone.Web.Images.zip" }
+          - { name: "keystone-productimporter", artifact: "Keystone.Web.ProductImporter.zip" }
+          - { name: "keystone-provision", artifact: "Keystone.Web.Provision.zip" }
+          - { name: "keystone-scheduler", artifact: "Keystone.Web.Scheduler.zip" }
+          - { name: "keystone-jobscheduler", artifact: "Keystone.Web.JobScheduler.zip" }
+          - { name: "keystone-support-portal", artifact: "Keystone.Web.BackOffice.zip" }
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-artifacts
+          path: drop
+
+      - name: Deploy to Azure Web Apps
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ matrix.app_name }}
-          resource-group: myResourceGroup
-          slot-name: 'production'
-          environment: ${{ github.event.inputs.environment }} 
-
-      - name: Logout of Azure
-        run: az logout
+          app-name: keystone-${{ matrix.environment }}-${{ matrix.app.name }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: drop/${{ matrix.app.artifact }}
