@@ -25,23 +25,7 @@ jobs:
   download-artifacts:
     runs-on: windows-latest
     steps:
-      - name: Check if artifact exists by name
-        run: |
-          $artifact_name = "drop-${{ github.event.inputs.build-number }}"
-          Write-Host "Checking for artifact: $artifact_name"
       
-          # List all artifacts for the repository and filter by name
-          $artifact_id = gh api -H "Accept: application/vnd.github.v3+json" /repos/amanrio/NetCore-Automation-Test/actions/artifacts | ConvertFrom-Json | 
-            Select-String -Pattern $artifact_name | Select-Object -First 1
-      
-          if ($artifact_id) {
-            Write-Host "Artifact $artifact_name found"
-          } else {
-            Write-Host "Artifact $artifact_name not found!"
-            exit 1
-          }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
   
@@ -50,6 +34,7 @@ jobs:
         with:
           name: drop-${{ github.event.inputs. build-number}}
           path: ./drop
+          run-id: 13564575102
           
          
 
