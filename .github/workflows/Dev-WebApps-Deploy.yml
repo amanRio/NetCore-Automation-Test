@@ -31,7 +31,7 @@ jobs:
         with:
           name: drop-${{ github.event.inputs.build-number }}
           path: ./drop
-          token: ${{ github.token }}
+          github-token: ${{ github.token }}
           run-id: 13589732906
                 
       - name: Upload artifacts for later use
