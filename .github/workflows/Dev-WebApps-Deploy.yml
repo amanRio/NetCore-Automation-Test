@@ -29,7 +29,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: drop
-          path: drop
+          path: ./artifacts
 
       - name: Upload artifacts for later use
         uses: actions/upload-artifact@v4
