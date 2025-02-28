@@ -28,7 +28,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: drop-${{ github.event.inputs.build-number }}
+          name: drop-27
           path: drop
 
       - name: Upload artifacts for later use
