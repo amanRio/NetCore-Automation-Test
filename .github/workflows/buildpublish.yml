@@ -47,7 +47,7 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
-        name: drop-${{ github.run_number }}
+        name: drop
         path: ${{ github.workspace }}
 
     - name: Publish Symbols for Main Branch
