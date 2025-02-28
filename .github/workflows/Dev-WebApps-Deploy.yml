@@ -17,7 +17,7 @@ on:
           - dev3
           - dev4
           - qa
-      build-number:
+      build-id:
         description: 'The build number to deploy'
         required: true
 
@@ -31,7 +31,7 @@ jobs:
             name: drop
             path: ./drop
             github-token: ${{ github.token }}
-            run-id: 13590539930
+            run-id: ${{ github.event.inputs.build-id }}
 
       - name: Upload artifacts for later use
         uses: actions/upload-artifact@v4
